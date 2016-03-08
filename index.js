@@ -45,6 +45,7 @@ function transformColor(string, source) {
   if (!balancedMatches) {
     throw new Error("Missing closing parentheses in '" + string + "'", source)
   }
+  var leadingSpacings = balancedMatches.pre.match(/^\s*/)[0]
 
-  return string.slice(0, index) + colorFn.convert("color(" + balancedMatches.body + ")") + transformColor(balancedMatches.post)
+  return string.slice(0, index) + leadingSpacings + colorFn.convert("color(" + balancedMatches.body + ")") + transformColor(balancedMatches.post)
 }
