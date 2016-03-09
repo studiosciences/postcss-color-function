@@ -2,7 +2,7 @@
  * Module dependencies.
  */
 var postcss = require("postcss")
-var balanced = require("balanced-match")
+var parser = require("postcss-value-parser")
 var colorFn = require("css-color-function")
 var helpers = require("postcss-message-helpers")
 
@@ -30,22 +30,15 @@ module.exports = postcss.plugin("postcss-color-function", function() {
  * @return {String}        converted declaration value to rgba()
  */
 function transformColor(string, source) {
-  var index = string.search(/(^|[^\w\-])color\(/)
+  var parsed = parser(string);
 
-  if (index === -1) {
-    return string
-  }
+  parsed.walk(function (node) {
+    if (node.type !== 'function' || node.value !== 'color') return
 
-  // NOTE: regexp search beginning of line of non char symbol before `color(`.
-  //       Offset used for second case.
-  index = index === 0 ? index : index + 1
+    node.value = colorFn.convert("color(" + parser.stringify(node.nodes) + ")")
+    node.type = 'word'
+    delete(node.nodes)
+  })
 
-  var fn = string.slice(index)
-  var balancedMatches = balanced("(", ")", fn)
-  if (!balancedMatches) {
-    throw new Error("Missing closing parentheses in '" + string + "'", source)
-  }
-  var leadingSpacings = balancedMatches.pre.match(/^\s*/)[0]
-
-  return string.slice(0, index) + leadingSpacings + colorFn.convert("color(" + balancedMatches.body + ")") + transformColor(balancedMatches.post)
+  return parsed.toString()
 }
