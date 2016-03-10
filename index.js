@@ -17,7 +17,7 @@ module.exports = postcss.plugin("postcss-color-function", function() {
       }
 
       decl.value = helpers.try(function transformColorValue() {
-        return transformColor(decl.value, decl.source)
+        return transformColor(decl.value)
       }, decl.source)
     })
   }
@@ -29,16 +29,11 @@ module.exports = postcss.plugin("postcss-color-function", function() {
  * @param  {String} string declaration value
  * @return {String}        converted declaration value to rgba()
  */
-function transformColor(string, source) {
-  var parsed = parser(string);
-
-  parsed.walk(function (node) {
+function transformColor(string) {
+  return parser(string).walk(function (node) {
     if (node.type !== 'function' || node.value !== 'color') return
 
-    node.value = colorFn.convert("color(" + parser.stringify(node.nodes) + ")")
+    node.value = colorFn.convert(parser.stringify(node))
     node.type = 'word'
-    delete(node.nodes)
-  })
-
-  return parsed.toString()
+  }).toString()
 }
